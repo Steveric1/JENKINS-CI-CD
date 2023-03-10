@@ -1,35 +1,42 @@
-pipeline {
-    agent any 
-    
+pipeline{
+
     environment {
-        Dev = 'SeniorDev'
+        dockerimagename = "steveric/myimage2"
+        dockerImage = ""
     }
     
+    agent any
+
     stages {
-        stage('Build') {
+        stage('git clone') {
             steps {
-                echo "Building"
-                echo "Samuel Persis Hosted Me In His Place But I don't Know"
+                git 'https://github.com/Steveric1/JENKINS-CI-CD.git'
             }
         }
-        stage('Testing') {
+        stage('Build image') {
             steps {
-                echo 'Testing'
-                echo "I love programming"
+                script {
+                    dockerImage = docker.build dockerimagename
+                }
             }
         }
-        stage('Deploy') {
-            when {
-                branch 'front-*'
+        stage('pushing image') {
+            environment {
+                registryCredential = 'dockerhub'
             }
             steps {
-                echo "Deploying"
-                echo "Done!"
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', registryCredential) {
+                        dockerImage.push("latest")
+                    }
+                }
             }
         }
-        stage('Prod') {
+        stage('Deploying Kubernetes') {
             steps {
-                echo "I got it!"
+                script {
+                    kubernetesDeploy(configs: 'complete.yml', kubeConfigId: 'kubernetes')
+                }
             }
         }
     }
