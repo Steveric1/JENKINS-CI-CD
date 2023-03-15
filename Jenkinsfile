@@ -1,43 +1,60 @@
-pipeline{
-
+pipeline {
+    agent any
     environment {
-        dockerimagename = "steveric/myimage2"
+        dockerimagename = "steveric/testrun"
         dockerImage = ""
     }
-    
-    agent any
 
     stages {
-        stage('git clone') {
-            steps {
-                git 'https://github.com/Steveric1/JENKINS-CI-CD.git'
-            }
-        }
         stage('Build image') {
             steps {
                 script {
                     dockerImage = docker.build dockerimagename
                 }
+                echo "Image built"
             }
         }
-        stage('pushing image') {
-            environment {
-                registryCredential = 'dockerhub'
-            }
+        stage('Pushing image to dockerhub') {
             steps {
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', registryCredential) {
-                        dockerImage.push("latest")
-                    }
+                withCredentials([string(credentialsId: 'DOCKER_HUB_PASSWD', variable: 'PASSWORD' )]){
+                    sh "docker login -u steveric -p $PASSWORD"
                 }
             }
         }
         stage('Deploying Kubernetes') {
             steps {
-                script {
-                    kubernetesDeploy(configs: 'complete.yml', kubeConfigId: 'kubernetes')
+                sshagent(['Admin1_SSH_Private_Key']) {
+                    sh "scp -o strictHostKeyChecking=no complete.yml ec2-user@54.160.191.176: ."
+                    script {
+                        try {
+                            sh "ssh ec2-user@54.160.191.176 kubeclt apply -f complete.yml"
+                        } catch(error) {
+                            sh "sh ec2-user@54.160.191.176 kubectl create -f complete.yml"
+                        }
+                    }
+                }
+            }
+        }
+        stage('git clone socks app') {
+            steps {
+                git branch: 'master', url: 'https://github.com/Steveric1/microservices-demo.git'
+            }
+        }
+        stage('Deploy socks web applications') {
+            steps {
+                sshagent(['Admin1_SSH_Private_Key']) {
+                    sh 'cd $WORKSPACE/deploy/kubernetes'
+                    sh "scp -o strictHostKeyChecking=no complete-demo.yaml ec2-user@54.160.191.176: ."
+                    script {
+                        try {
+                            sh "ssh ec2-user@54.160.191.176 kubectl apply -f complete-demo.yaml"
+                        } catch(error) {
+                            sh "ssh ec2-user@54.160.191.176 kubectl create -f complete-demo.yaml"
+                        }
+                    }
                 }
             }
         }
     }
 }
+
