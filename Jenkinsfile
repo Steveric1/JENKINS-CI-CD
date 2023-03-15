@@ -8,7 +8,7 @@ pipeline {
         stage('Deploying Kubernetes') {
             steps {
                 sshagent(['Admin1_SSH_Private_Key']) {
-                    sh "scp -o strictHostKeyChecking=no complete.yml ec2-user@54.160.191.176: ."
+                    sh "scp -o strictHostKeyChecking=no complete.yml ec2-user@54.160.191.176: /home/ec2-user"
                     script {
                         try {
                             sh "ssh ec2-user@54.160.191.176 kubeclt apply -f complete.yml"
@@ -28,7 +28,7 @@ pipeline {
             steps {
                 sshagent(['Admin1_SSH_Private_Key']) {
                     sh 'cd $WORKSPACE/deploy/kubernetes'
-                    sh "scp -o strictHostKeyChecking=no complete-demo.yaml ec2-user@54.160.191.176: ."
+                    sh "scp -o strictHostKeyChecking=no complete-demo.yaml ec2-user@54.160.191.176: /home/ec2-user"
                     script {
                         try {
                             sh "ssh ec2-user@54.160.191.176 kubectl apply -f complete-demo.yaml"
