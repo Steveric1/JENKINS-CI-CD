@@ -1,26 +1,10 @@
 pipeline {
     agent any
     environment {
-        dockerimagename = "steveric/testrun"
-        dockerImage = ""
+        devs = "seniorDevs"
     }
 
     stages {
-        stage('Build image') {
-            steps {
-                script {
-                    dockerImage = docker.build dockerimagename
-                }
-                echo "Image built"
-            }
-        }
-        stage('Pushing image to dockerhub') {
-            steps {
-                withCredentials([string(credentialsId: 'DOCKER_HUB_PASSWD', variable: 'PASSWORD' )]){
-                    sh "docker login -u steveric -p $PASSWORD"
-                }
-            }
-        }
         stage('Deploying Kubernetes') {
             steps {
                 sshagent(['Admin1_SSH_Private_Key']) {
@@ -57,4 +41,7 @@ pipeline {
         }
     }
 }
+
+
+
 

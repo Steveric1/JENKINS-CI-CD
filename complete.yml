@@ -17,7 +17,7 @@ spec:
       spec:
         containers:
            - name: server
-             image: image2
+             image: steveric/testrun
              ports:
                - containerPort: 80
 
