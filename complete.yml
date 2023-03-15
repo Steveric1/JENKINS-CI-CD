@@ -17,8 +17,8 @@ spec:
       spec:
         containers:
            - name: server
-             image: myimage2:latest
-             port:
+             image: image2
+             ports:
                - containerPort: 80
 
 ---
@@ -27,7 +27,7 @@ kind: Service
 metadata: 
    name: nodeport
 spec:
-  type: Nodeport
+  type: NodePort
   selector: 
      app: webserver
   ports:
